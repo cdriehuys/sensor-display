@@ -13,6 +13,7 @@
 
         <Button
             android:id="@+id/btn_accelerometer"
+            android:onClick="onClick"
             android:text="@string/accelerometer" />
 
         <com.chathandriehuys.sensordisplay.SensorInfoView
@@ -22,12 +23,13 @@
 
         <Button
             android:id="@+id/btn_proximity"
+            android:onClick="onClick"
             android:text="@string/proximity" />
 
         <com.chathandriehuys.sensordisplay.SensorInfoView
             android:id="@+id/proximity_info"
             android:layout_height="wrap_content"
-            android:layout_width="wrap_content" android:maxLines="100"/>
+            android:layout_width="wrap_content" />
 
     </GridLayout>
 
