@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">SensorDisplay</string>
-    <string name="loading_sensor_info">Loading sensor information.</string>
+    <string name="sensor_info_loading">Loading sensor information.</string>
+    <string name="sensor_info_not_found">No sensor found.</string>
 </resources>
