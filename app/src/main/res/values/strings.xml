@@ -1,3 +1,8 @@
 <resources>
+    <string name="accelerometer">Accelerometer</string>
     <string name="app_name">SensorDisplay</string>
+    <string name="proximity">Proximity</string>
+    <string name="sensor_info">\'%1$s\' is present\n  - Range: %2$f\n  - Resolution: %3$f\n  - Delay: %4$d</string>
+    <string name="sensor_info_loading">Loading sensor information.</string>
+    <string name="sensor_info_not_found">No sensor found.</string>
 </resources>
