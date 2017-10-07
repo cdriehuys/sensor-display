@@ -7,16 +7,11 @@ import android.hardware.SensorManager;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 
-import java.util.Locale;
-
 
 public class SensorInfoView extends android.support.v7.widget.AppCompatTextView {
-    private static final String INFO_FORMAT =
-            "'%s' is present\n  - Range: %f\n  - Resolution: %f\n  - Delay: %d";
+    private int sensorType;
 
     private Resources resources;
-
-    private Sensor sensor;
 
     public SensorInfoView(Context context) {
         super(context);
@@ -43,14 +38,32 @@ public class SensorInfoView extends android.support.v7.widget.AppCompatTextView 
         init();
     }
 
+    /**
+     * Get the type of sensor the view is displaying info for.
+     *
+     * @return An integer corresponding to the type of sensor the view is displaying information
+     *         about.
+     */
+    public int getSensorType() {
+        return sensorType;
+    }
+
+    /**
+     * Set the type of sensor to display information for.
+     *
+     * The view will then obtain the default sensor for that type and display information about it.
+     *
+     * @param sensorType The type of sensor to read.
+     */
     public void setSensorType(int sensorType) {
+        this.sensorType = sensorType;
+
         SensorManager manager = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
-        sensor = manager.getDefaultSensor(sensorType);
+        Sensor sensor = manager.getDefaultSensor(sensorType);
 
         if (sensor != null) {
-            setText(String.format(
-                    Locale.US,
-                    INFO_FORMAT,
+            setText(resources.getString(
+                    R.string.sensor_info,
                     sensor.getName(),
                     sensor.getMaximumRange(),
                     sensor.getResolution(),
