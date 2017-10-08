@@ -5,25 +5,28 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Locale;
 
 
 public class PlotView extends View {
-    public static final int NUM_POINTS = 25;
-
     private static final int AXIS_SIZE = 200;
+    private static final int DOMAIN_SECONDS = 5;
     private static final int LABEL_SIZE = 48;
     private static final int PLOT_GUTTER_SIZE = 50;
+    private static final int PLOT_REFRESH_INTERVAL = 1000 / 60;
     private static final int POINT_RADIUS = 10;
     private static final int RANGE_BUFFER = 1;
     private static final int TEXT_PADDING = 10;
 
-    private ArrayList<Float> data;
+    private ArrayList<DataPoint<Float>> data;
 
     private float range, rangeMax, rangeMin;
 
@@ -60,16 +63,19 @@ public class PlotView extends View {
         init();
     }
 
-    public void addPoint(float point) {
+    public void addPoint(DataPoint<Float> point) {
         data.add(point);
 
-        while (data.size() > NUM_POINTS) {
-            data.remove(0);
+        Date now = new Date();
+        long expirationTime = now.getTime() - 1000 * DOMAIN_SECONDS;
+
+        for (int i = data.size() - 1; i >= 0; i--) {
+            if (data.get(i).getTimestamp().getTime() < expirationTime) {
+                data.remove(i);
+            }
         }
 
         refreshRange();
-
-        invalidate();
     }
 
     @Override
@@ -103,13 +109,19 @@ public class PlotView extends View {
         labelPaint.setTextAlign(Paint.Align.CENTER);
 
         canvas.drawText(
+                String.format(Locale.US, "-%d", 1000 * DOMAIN_SECONDS),
+                drawableArea.left,
+                drawableArea.top + TEXT_PADDING + labelPaint.getTextSize(),
+                labelPaint);
+
+        canvas.drawText(
                 "Now",
                 drawableArea.right,
                 drawableArea.top + TEXT_PADDING + labelPaint.getTextSize(),
                 labelPaint);
 
         canvas.drawText(
-                "Time",
+                "Time (ms)",
                 (drawableArea.left + drawableArea.right) / 2,
                 drawableArea.bottom,
                 labelPaint);
@@ -147,21 +159,38 @@ public class PlotView extends View {
         int width = drawableArea.width();
         int height = drawableArea.height();
 
+        Date now = new Date();
+        Date oldest = new Date(now.getTime() - 1000 * DOMAIN_SECONDS);
+
+        long domain = now.getTime() - oldest.getTime();
+
         float prevX = 0;
         float prevY = 0;
 
+        boolean shouldDrawConnector = false;
+
         for (int i = 0; i < data.size(); i++) {
-            float x = width / (NUM_POINTS - 1.0f) * i + drawableArea.left;
-            float y = height - (height / range * (data.get(i) - rangeMin)) + drawableArea.top;
+            Date pointDate = data.get(i).getTimestamp();
+
+            if (pointDate.before(oldest)) {
+                shouldDrawConnector = false;
+
+                continue;
+            }
+
+            float x = ((float) width) / domain * (pointDate.getTime() - oldest.getTime()) + drawableArea.left;
+            float y = height - (height / range * (data.get(i).getData() - rangeMin)) + drawableArea.top;
 
             canvas.drawCircle(x, y, POINT_RADIUS, pointPaint);
 
-            if (i > 0) {
+            if (shouldDrawConnector) {
                 canvas.drawLine(prevX, prevY, x, y, pointPaint);
             }
 
             prevX = x;
             prevY = y;
+
+            shouldDrawConnector = true;
         }
     }
 
@@ -185,15 +214,25 @@ public class PlotView extends View {
         axisAreaX = new Rect();
         axisAreaY = new Rect();
         plotArea = new Rect();
+
+        final Handler handler = new Handler(Looper.getMainLooper());
+        Runnable refreshPlotRunnable = new Runnable() {
+            public void run() {
+                invalidate();
+                handler.postDelayed(this, PLOT_REFRESH_INTERVAL);
+            }
+        };
+
+        refreshPlotRunnable.run();
     }
 
     private void refreshRange() {
         rangeMax = Float.MIN_VALUE;
         rangeMin = Float.MAX_VALUE;
 
-        for (float point : data) {
-            float max = point + RANGE_BUFFER;
-            float min = point - RANGE_BUFFER;
+        for (DataPoint<Float> point : data) {
+            float max = point.getData() + RANGE_BUFFER;
+            float min = point.getData() - RANGE_BUFFER;
 
             if (max > rangeMax) {
                 rangeMax = max;
