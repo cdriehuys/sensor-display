@@ -10,13 +10,13 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Locale;
 
 
 public class PlotView extends View {
-    public static final int NUM_POINTS = 25;
-
     private static final int AXIS_SIZE = 200;
+    private static final int DOMAIN_SECONDS = 5;
     private static final int LABEL_SIZE = 48;
     private static final int PLOT_GUTTER_SIZE = 50;
     private static final int POINT_RADIUS = 10;
@@ -63,8 +63,13 @@ public class PlotView extends View {
     public void addPoint(DataPoint<Float> point) {
         data.add(point);
 
-        while (data.size() > NUM_POINTS) {
-            data.remove(0);
+        Date now = new Date();
+        long expirationTime = now.getTime() - 1000 * DOMAIN_SECONDS;
+
+        for (int i = data.size() - 1; i >= 0; i--) {
+            if (data.get(i).getTimestamp().getTime() < expirationTime) {
+                data.remove(i);
+            }
         }
 
         refreshRange();
@@ -147,11 +152,22 @@ public class PlotView extends View {
         int width = drawableArea.width();
         int height = drawableArea.height();
 
+        Date now = new Date();
+        Date oldest = new Date(now.getTime() - 1000 * DOMAIN_SECONDS);
+
+        long domain = now.getTime() - oldest.getTime();
+
         float prevX = 0;
         float prevY = 0;
 
         for (int i = 0; i < data.size(); i++) {
-            float x = width / (NUM_POINTS - 1.0f) * i + drawableArea.left;
+            Date pointDate = data.get(i).getTimestamp();
+
+            if (pointDate.before(oldest)) {
+                continue;
+            }
+
+            float x = ((float) width) / domain * (pointDate.getTime() - oldest.getTime()) + drawableArea.left;
             float y = height - (height / range * (data.get(i).getData() - rangeMin)) + drawableArea.top;
 
             canvas.drawCircle(x, y, POINT_RADIUS, pointPaint);
