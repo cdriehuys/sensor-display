@@ -13,11 +13,13 @@ import java.util.ArrayList;
 
 
 public class PlotView extends View {
-    public static final int MAX_Y = 20;
     public static final int NUM_POINTS = 25;
     public static final int POINT_RADIUS = 10;
+    public static final int RANGE_BUFFER = 1;
 
     private ArrayList<Float> data;
+
+    private float range, rangeMax, rangeMin;
 
     private Paint pointPaint;
 
@@ -55,6 +57,8 @@ public class PlotView extends View {
             data.remove(0);
         }
 
+        refreshRange();
+
         invalidate();
     }
 
@@ -83,7 +87,7 @@ public class PlotView extends View {
 
         for (int i = 0; i < data.size(); i++) {
             float x = width / (NUM_POINTS - 1.0f) * i + drawableArea.left;
-            float y = height - (height / MAX_Y * data.get(i)) + drawableArea.top;
+            float y = height - (height / range * (data.get(i) - rangeMin)) + drawableArea.top;
 
             canvas.drawCircle(x, y, POINT_RADIUS, pointPaint);
 
@@ -99,9 +103,33 @@ public class PlotView extends View {
     private void init() {
         data = new ArrayList<>();
 
+        range = 2 * RANGE_BUFFER;
+        rangeMax = RANGE_BUFFER;
+        rangeMin = -RANGE_BUFFER;
+
         pointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         pointPaint.setColor(Color.GREEN);
 
         plotArea = new Rect();
+    }
+
+    private void refreshRange() {
+        rangeMax = Float.MIN_VALUE;
+        rangeMin = Float.MAX_VALUE;
+
+        for (float point : data) {
+            float max = point + RANGE_BUFFER;
+            float min = point - RANGE_BUFFER;
+
+            if (max > rangeMax) {
+                rangeMax = max;
+            }
+
+            if (min < rangeMin) {
+                rangeMin = min;
+            }
+        }
+
+        range = rangeMax - rangeMin;
     }
 }
