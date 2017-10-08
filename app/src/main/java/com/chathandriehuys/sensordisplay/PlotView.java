@@ -10,19 +10,29 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 
 public class PlotView extends View {
     public static final int NUM_POINTS = 25;
-    public static final int POINT_RADIUS = 10;
-    public static final int RANGE_BUFFER = 1;
+
+    private static final int AXIS_SIZE = 200;
+    private static final int LABEL_SIZE = 48;
+    private static final int PLOT_GUTTER_SIZE = 50;
+    private static final int POINT_RADIUS = 10;
+    private static final int RANGE_BUFFER = 1;
+    private static final int TEXT_PADDING = 10;
 
     private ArrayList<Float> data;
 
     private float range, rangeMax, rangeMin;
 
+    private Paint axisPaint;
+    private Paint labelPaint;
     private Paint pointPaint;
 
+    private Rect axisAreaX;
+    private Rect axisAreaY;
     private Rect plotArea;
 
     public PlotView(Context context) {
@@ -69,13 +79,68 @@ public class PlotView extends View {
         int width = canvas.getWidth();
         int height = canvas.getHeight();
 
-        plotArea.set(
-                Math.round(width * .2f),
-                0,
-                Math.round(width * .9f),
-                height);
+        int xStart = PLOT_GUTTER_SIZE;
+        int yStart = PLOT_GUTTER_SIZE;
 
+        int xEnd = width - PLOT_GUTTER_SIZE;
+        int yEnd = height - PLOT_GUTTER_SIZE;
+
+        int plotXStart = xStart + AXIS_SIZE;
+        int plotYEnd = yEnd - AXIS_SIZE;
+
+        axisAreaX.set(plotXStart, plotYEnd, xEnd, yEnd);
+        axisAreaY.set(xStart, yStart, plotXStart, plotYEnd);
+        plotArea.set(plotXStart, yStart, xEnd, plotYEnd);
+
+        drawAxisX(canvas, axisAreaX);
+        drawAxisY(canvas, axisAreaY);
         drawData(canvas, plotArea);
+    }
+
+    private void drawAxisX(Canvas canvas, Rect drawableArea) {
+        canvas.drawLine(drawableArea.left, drawableArea.top, drawableArea.right, drawableArea.top, axisPaint);
+
+        labelPaint.setTextAlign(Paint.Align.CENTER);
+
+        canvas.drawText(
+                "Now",
+                drawableArea.right,
+                drawableArea.top + TEXT_PADDING + labelPaint.getTextSize(),
+                labelPaint);
+
+        canvas.drawText(
+                "Time",
+                (drawableArea.left + drawableArea.right) / 2,
+                drawableArea.bottom,
+                labelPaint);
+    }
+
+    private void drawAxisY(Canvas canvas, Rect drawableArea) {
+        canvas.drawLine(drawableArea.right, drawableArea.top, drawableArea.right, drawableArea.bottom, axisPaint);
+
+        labelPaint.setTextAlign(Paint.Align.RIGHT);
+
+        canvas.drawText(
+                String.format(Locale.US, "%.2f", rangeMax),
+                drawableArea.right - TEXT_PADDING,
+                drawableArea.top + labelPaint.getTextSize() / 2,
+                labelPaint);
+
+        canvas.drawText(
+                String.format(Locale.US, "%.2f", rangeMin),
+                drawableArea.right - TEXT_PADDING,
+                drawableArea.bottom,
+                labelPaint);
+
+        labelPaint.setTextAlign(Paint.Align.CENTER);
+
+        float yTitleX = drawableArea.left;
+        float yTitleY = (drawableArea.top + drawableArea.bottom) / 2;
+
+        canvas.save();
+        canvas.rotate(270.0f, yTitleX, yTitleY);
+        canvas.drawText("Sensor Value", yTitleX, yTitleY, labelPaint);
+        canvas.restore();
     }
 
     private void drawData(Canvas canvas, Rect drawableArea) {
@@ -107,9 +172,18 @@ public class PlotView extends View {
         rangeMax = RANGE_BUFFER;
         rangeMin = -RANGE_BUFFER;
 
+        axisPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        axisPaint.setColor(Color.LTGRAY);
+
+        labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        labelPaint.setColor(Color.GRAY);
+        labelPaint.setTextSize(LABEL_SIZE);
+
         pointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         pointPaint.setColor(Color.GREEN);
 
+        axisAreaX = new Rect();
+        axisAreaY = new Rect();
         plotArea = new Rect();
     }
 
@@ -129,6 +203,9 @@ public class PlotView extends View {
                 rangeMin = min;
             }
         }
+
+        rangeMax = Math.round(rangeMax);
+        rangeMin = Math.round(rangeMin);
 
         range = rangeMax - rangeMin;
     }
