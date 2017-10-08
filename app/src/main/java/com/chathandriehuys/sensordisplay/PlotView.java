@@ -28,13 +28,15 @@ public class PlotView extends View {
     private static final int TEXT_PADDING = 10;
 
     private ArrayList<DataPoint<Float>> data;
+    private ArrayList<Integer> xAxisTicks, yAxisTicks;
 
     private Canvas canvas;
 
-    private float range, rangeMax, rangeMin;
+    private int range, rangeMax, rangeMin;
 
     private Paint axisPaint;
     private Paint labelPaint;
+    private Paint minorLabelPaint;
     private Paint pointPaint;
 
     private Rect axisAreaX;
@@ -78,7 +80,11 @@ public class PlotView extends View {
             }
         }
 
+        // TODO: Refresh data without requiring a point to be added
         refreshRange();
+
+        xAxisTicks = generateTickMarks(0, 1000 * DOMAIN_SECONDS);
+        yAxisTicks = generateTickMarks(rangeMin, rangeMax);
     }
 
     @Override
@@ -105,6 +111,7 @@ public class PlotView extends View {
 
         drawAxisX();
         drawAxisY();
+
         drawData();
     }
 
@@ -127,6 +134,10 @@ public class PlotView extends View {
         drawXAxisLabel(1000 * DOMAIN_SECONDS);
         drawXAxisLabel(0);
 
+        for (float tick : xAxisTicks) {
+            drawXAxisLabel(tick);
+        }
+
         canvas.drawText(
                 "Time (ms)",
                 (axisAreaX.left + axisAreaX.right) / 2,
@@ -139,6 +150,10 @@ public class PlotView extends View {
 
         drawYAxisLabel(rangeMax);
         drawYAxisLabel(rangeMin);
+
+        for (float tick : yAxisTicks) {
+            drawYAxisLabel(tick);
+        }
 
         labelPaint.setTextAlign(Paint.Align.CENTER);
 
@@ -189,10 +204,14 @@ public class PlotView extends View {
         float realX = calculateCanvasX(x);
         float realY = axisAreaX.top;
 
+        canvas.drawLine(
+                realX,
+                plotArea.top,
+                realX,
+                plotArea.bottom + AXIS_TICK_LENGTH,
+                minorLabelPaint);
+
         labelPaint.setTextAlign(Paint.Align.CENTER);
-
-        canvas.drawLine(realX, realY - AXIS_TICK_LENGTH, realX, realY + AXIS_TICK_LENGTH, labelPaint);
-
         canvas.drawText(
                 String.format(Locale.US, "-%.0f", x),
                 realX,
@@ -204,9 +223,14 @@ public class PlotView extends View {
         float realX = axisAreaY.right;
         float realY = calculateCanvasY(y);
 
-        labelPaint.setTextAlign(Paint.Align.RIGHT);
+        canvas.drawLine(
+                plotArea.left - AXIS_TICK_LENGTH,
+                realY,
+                plotArea.right,
+                realY,
+                minorLabelPaint);
 
-        canvas.drawLine(realX - AXIS_TICK_LENGTH, realY, realX + AXIS_TICK_LENGTH, realY, labelPaint);
+        labelPaint.setTextAlign(Paint.Align.RIGHT);
         canvas.drawText(
                 String.format(Locale.US, "%.0f", y),
                 realX - AXIS_TICK_LENGTH - TEXT_PADDING,
@@ -214,8 +238,29 @@ public class PlotView extends View {
                 labelPaint);
     }
 
+    private ArrayList<Integer> generateTickMarks(int min, int max) {
+        float range = max - min;
+
+        ArrayList<Integer> ticks = new ArrayList<>();
+
+        if (range <= 1) {
+            return ticks;
+        }
+
+        int step = (int) Math.pow(10, Math.floor(Math.log10(range)));
+        int start = min + step - (min % step);
+
+        for (int tick = start; tick < max; tick += step) {
+            ticks.add(tick);
+        }
+
+        return ticks;
+    }
+
     private void init() {
         data = new ArrayList<>();
+        xAxisTicks = new ArrayList<>();
+        yAxisTicks = new ArrayList<>();
 
         range = 2 * RANGE_BUFFER;
         rangeMax = RANGE_BUFFER;
@@ -227,6 +272,9 @@ public class PlotView extends View {
         labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         labelPaint.setColor(Color.DKGRAY);
         labelPaint.setTextSize(LABEL_SIZE);
+
+        minorLabelPaint = new Paint(labelPaint);
+        minorLabelPaint.setColor(Color.LTGRAY);
 
         pointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         pointPaint.setColor(Color.GREEN);
@@ -247,24 +295,21 @@ public class PlotView extends View {
     }
 
     private void refreshRange() {
-        rangeMax = Float.MIN_VALUE;
-        rangeMin = Float.MAX_VALUE;
+        rangeMax = Integer.MIN_VALUE;
+        rangeMin = Integer.MAX_VALUE;
 
         for (DataPoint<Float> point : data) {
             float max = point.getData() + RANGE_BUFFER;
             float min = point.getData() - RANGE_BUFFER;
 
             if (max > rangeMax) {
-                rangeMax = max;
+                rangeMax = (int) Math.ceil(max);
             }
 
             if (min < rangeMin) {
-                rangeMin = min;
+                rangeMin = (int) Math.floor(min);
             }
         }
-
-        rangeMax = Math.round(rangeMax);
-        rangeMin = Math.round(rangeMin);
 
         range = rangeMax - rangeMin;
     }
