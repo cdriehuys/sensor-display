@@ -11,13 +11,19 @@ class TimeSeries {
     private static final int DOMAIN_MILLIS = 5000;
 
     private ArrayList<DataPoint> data;
+    private ArrayList<TimeSeriesListener> listeners;
 
     private int domain;
 
     TimeSeries() {
         data = new ArrayList<>();
+        listeners = new ArrayList<>();
 
         domain = DOMAIN_MILLIS;
+    }
+
+    void addListener(TimeSeriesListener listener) {
+        listeners.add(listener);
     }
 
     void addPoint(DataPoint point) {
@@ -31,6 +37,20 @@ class TimeSeries {
                 data.remove(i);
             }
         }
+
+        for (TimeSeriesListener listener : listeners) {
+            listener.pointAdded(this, point);
+        }
+    }
+
+    float getAverage() {
+        float sum = 0;
+
+        for (DataPoint point : data) {
+            sum += point.getData();
+        }
+
+        return sum / data.size();
     }
 
     ArrayList<DataPoint> getData() {
@@ -51,5 +71,17 @@ class TimeSeries {
         }
 
         return new Interval<>(min, max);
+    }
+
+    float getVariance() {
+        float sum = 0;
+
+        for (DataPoint point : data) {
+            sum += point.getData() * point.getData();
+        }
+
+        float average = getAverage();
+
+        return sum / data.size() - average * average;
     }
 }

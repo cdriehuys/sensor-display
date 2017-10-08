@@ -1,6 +1,7 @@
 package com.chathandriehuys.sensordisplay;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -14,6 +15,8 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
 
     private static final String TAG = SensorPlotActivity.class.getSimpleName();
 
+    private MeanTimeSeries sensorDataMean;
+
     private PlotView plotView;
 
     private Sensor sensor;
@@ -22,12 +25,20 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
 
     private TimeSeries sensorData;
 
+    private VarianceTimeSeries sensorDataVariance;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sensor_plot);
 
         sensorData = new TimeSeries();
+
+        sensorDataMean = new MeanTimeSeries();
+        sensorData.addListener(sensorDataMean);
+
+        sensorDataVariance = new VarianceTimeSeries();
+        sensorData.addListener(sensorDataVariance);
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -41,7 +52,9 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
 
         plotView = (PlotView) findViewById(R.id.plot_view);
 
-        plotView.addSeries(sensorData);
+        plotView.addSeries(sensorData, Color.parseColor("#23af00"));
+        plotView.addSeries(sensorDataMean, Color.parseColor("#2655ff"));
+        plotView.addSeries(sensorDataVariance, Color.parseColor("#ffe732"));
     }
 
     @Override

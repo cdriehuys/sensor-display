@@ -28,7 +28,7 @@ public class PlotView extends View {
     private static final int RANGE_BUFFER = 1;
     private static final int TEXT_PADDING = 10;
 
-    private ArrayList<TimeSeries> series;
+    private ArrayList<PlotSeriesEntry> series;
 
     private Canvas canvas;
 
@@ -69,8 +69,8 @@ public class PlotView extends View {
         init();
     }
 
-    public void addSeries(TimeSeries series) {
-        this.series.add(series);
+    public void addSeries(TimeSeries series, int color) {
+        this.series.add(new PlotSeriesEntry(series, color));
     }
 
     @Override
@@ -153,7 +153,7 @@ public class PlotView extends View {
 
         canvas.save();
         canvas.rotate(270.0f, yTitleX, yTitleY);
-        canvas.drawText("Sensor Value", yTitleX, yTitleY, labelPaint);
+        canvas.drawText("Data", yTitleX, yTitleY, labelPaint);
         canvas.restore();
     }
 
@@ -161,13 +161,15 @@ public class PlotView extends View {
         Date now = new Date();
         Date oldest = new Date(now.getTime() - 1000 * DOMAIN_SECONDS);
 
-        for (TimeSeries s : series) {
+        for (PlotSeriesEntry entry : series) {
+            pointPaint.setColor(entry.getColor());
+
             float prevX = 0;
             float prevY = 0;
 
             boolean shouldDrawConnector = false;
 
-            for (DataPoint point : s.getData()) {
+            for (DataPoint point : entry.getSeries().getData()) {
                 Date pointDate = point.getTimestamp();
 
                 if (pointDate.before(oldest)) {
@@ -255,8 +257,8 @@ public class PlotView extends View {
     private Interval<Integer> getDomain() {
         int domainMin = Integer.MAX_VALUE, domainMax = Integer.MIN_VALUE;
 
-        for (TimeSeries s : series) {
-            Interval<Integer> domain = s.getDomain();
+        for (PlotSeriesEntry entry : series) {
+            Interval<Integer> domain = entry.getSeries().getDomain();
 
             domainMin = Math.min(domain.getMin(), domainMin);
             domainMax = Math.max(domain.getMax(), domainMax);
@@ -268,8 +270,8 @@ public class PlotView extends View {
     private Interval<Float> getRange() {
         float rangeMin = Float.MAX_VALUE, rangeMax = Float.MIN_VALUE;
 
-        for (TimeSeries s : series) {
-            Interval<Float> range = s.getRange();
+        for (PlotSeriesEntry entry : series) {
+            Interval<Float> range = entry.getSeries().getRange();
 
             rangeMin = Math.min(range.getMin() - RANGE_BUFFER, rangeMin);
             rangeMax = Math.max(range.getMax() + RANGE_BUFFER, rangeMax);
