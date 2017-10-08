@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -27,12 +28,12 @@ public class PlotView extends View {
     private static final int RANGE_BUFFER = 1;
     private static final int TEXT_PADDING = 10;
 
-    private ArrayList<DataPoint<Float>> data;
-    private ArrayList<Integer> xAxisTicks, yAxisTicks;
+    private ArrayList<TimeSeries> series;
 
     private Canvas canvas;
 
-    private int range, rangeMax, rangeMin;
+    private Interval<Float> range;
+    private Interval<Integer> domain;
 
     private Paint axisPaint;
     private Paint labelPaint;
@@ -68,23 +69,8 @@ public class PlotView extends View {
         init();
     }
 
-    public void addPoint(DataPoint<Float> point) {
-        data.add(point);
-
-        Date now = new Date();
-        long expirationTime = now.getTime() - 1000 * DOMAIN_SECONDS;
-
-        for (int i = data.size() - 1; i >= 0; i--) {
-            if (data.get(i).getTimestamp().getTime() < expirationTime) {
-                data.remove(i);
-            }
-        }
-
-        // TODO: Refresh data without requiring a point to be added
-        refreshRange();
-
-        xAxisTicks = generateTickMarks(0, 1000 * DOMAIN_SECONDS);
-        yAxisTicks = generateTickMarks(rangeMin, rangeMax);
+    public void addSeries(TimeSeries series) {
+        this.series.add(series);
     }
 
     @Override
@@ -109,6 +95,9 @@ public class PlotView extends View {
         axisAreaY.set(xStart, yStart, plotXStart, plotYEnd);
         plotArea.set(plotXStart, yStart, xEnd, plotYEnd);
 
+        domain = getDomain();
+        range = getRange();
+
         drawAxisX();
         drawAxisY();
 
@@ -125,16 +114,16 @@ public class PlotView extends View {
     private float calculateCanvasY(float y) {
         float height = plotArea.height();
 
-        return axisAreaY.bottom - height / range * (y - rangeMin);
+        return axisAreaY.bottom - height / (range.getMax() - range.getMin()) * (y - range.getMin());
     }
 
     private void drawAxisX() {
         canvas.drawLine(axisAreaX.left, axisAreaX.top, axisAreaX.right, axisAreaX.top, axisPaint);
 
-        drawXAxisLabel(1000 * DOMAIN_SECONDS);
-        drawXAxisLabel(0);
+        drawXAxisLabel(domain.getMin());
+        drawXAxisLabel(domain.getMax());
 
-        for (float tick : xAxisTicks) {
+        for (float tick : generateTickMarks(domain.getMin(), domain.getMax())) {
             drawXAxisLabel(tick);
         }
 
@@ -148,10 +137,12 @@ public class PlotView extends View {
     private void drawAxisY() {
         canvas.drawLine(axisAreaY.right, axisAreaY.top, axisAreaY.right, axisAreaY.bottom, axisPaint);
 
-        drawYAxisLabel(rangeMax);
-        drawYAxisLabel(rangeMin);
+        Interval<Float> range = getRange();
 
-        for (float tick : yAxisTicks) {
+        drawYAxisLabel(range.getMin());
+        drawYAxisLabel(range.getMax());
+
+        for (float tick : generateTickMarks((int) Math.floor(range.getMin()), (int) Math.ceil(range.getMax()))) {
             drawYAxisLabel(tick);
         }
 
@@ -170,33 +161,37 @@ public class PlotView extends View {
         Date now = new Date();
         Date oldest = new Date(now.getTime() - 1000 * DOMAIN_SECONDS);
 
-        float prevX = 0;
-        float prevY = 0;
+        for (TimeSeries s : series) {
+            float prevX = 0;
+            float prevY = 0;
 
-        boolean shouldDrawConnector = false;
+            boolean shouldDrawConnector = false;
 
-        for (DataPoint<Float> point : data) {
-            Date pointDate = point.getTimestamp();
+            for (DataPoint point : s.getData()) {
+                Date pointDate = point.getTimestamp();
 
-            if (pointDate.before(oldest)) {
-                shouldDrawConnector = false;
+                if (pointDate.before(oldest)) {
+                    shouldDrawConnector = false;
 
-                continue;
+                    continue;
+                }
+
+                float x = calculateCanvasX(now.getTime() - point.getTimestamp().getTime());
+                float y = calculateCanvasY(point.getData());
+
+                canvas.drawCircle(x, y, POINT_RADIUS, pointPaint);
+
+                Log.v("TAG", String.format("Drawing point at (%f, %f)", x, y));
+
+                if (shouldDrawConnector) {
+                    canvas.drawLine(prevX, prevY, x, y, pointPaint);
+                }
+
+                prevX = x;
+                prevY = y;
+
+                shouldDrawConnector = true;
             }
-
-            float x = calculateCanvasX(now.getTime() - point.getTimestamp().getTime());
-            float y = calculateCanvasY(point.getData());
-
-            canvas.drawCircle(x, y, POINT_RADIUS, pointPaint);
-
-            if (shouldDrawConnector) {
-                canvas.drawLine(prevX, prevY, x, y, pointPaint);
-            }
-
-            prevX = x;
-            prevY = y;
-
-            shouldDrawConnector = true;
         }
     }
 
@@ -257,14 +252,34 @@ public class PlotView extends View {
         return ticks;
     }
 
-    private void init() {
-        data = new ArrayList<>();
-        xAxisTicks = new ArrayList<>();
-        yAxisTicks = new ArrayList<>();
+    private Interval<Integer> getDomain() {
+        int domainMin = Integer.MAX_VALUE, domainMax = Integer.MIN_VALUE;
 
-        range = 2 * RANGE_BUFFER;
-        rangeMax = RANGE_BUFFER;
-        rangeMin = -RANGE_BUFFER;
+        for (TimeSeries s : series) {
+            Interval<Integer> domain = s.getDomain();
+
+            domainMin = Math.min(domain.getMin(), domainMin);
+            domainMax = Math.max(domain.getMax(), domainMax);
+        }
+
+        return new Interval<>(domainMin, domainMax);
+    }
+
+    private Interval<Float> getRange() {
+        float rangeMin = Float.MAX_VALUE, rangeMax = Float.MIN_VALUE;
+
+        for (TimeSeries s : series) {
+            Interval<Float> range = s.getRange();
+
+            rangeMin = Math.min(range.getMin() - RANGE_BUFFER, rangeMin);
+            rangeMax = Math.max(range.getMax() + RANGE_BUFFER, rangeMax);
+        }
+
+        return new Interval<>(rangeMin, rangeMax);
+    }
+
+    private void init() {
+        series = new ArrayList<>();
 
         axisPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         axisPaint.setColor(Color.GRAY);
@@ -292,25 +307,5 @@ public class PlotView extends View {
         };
 
         refreshPlotRunnable.run();
-    }
-
-    private void refreshRange() {
-        rangeMax = Integer.MIN_VALUE;
-        rangeMin = Integer.MAX_VALUE;
-
-        for (DataPoint<Float> point : data) {
-            float max = point.getData() + RANGE_BUFFER;
-            float min = point.getData() - RANGE_BUFFER;
-
-            if (max > rangeMax) {
-                rangeMax = (int) Math.ceil(max);
-            }
-
-            if (min < rangeMin) {
-                rangeMin = (int) Math.floor(min);
-            }
-        }
-
-        range = rangeMax - rangeMin;
     }
 }

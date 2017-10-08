@@ -20,10 +20,14 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
 
     private SensorManager manager;
 
+    private TimeSeries sensorData;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sensor_plot);
+
+        sensorData = new TimeSeries();
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -36,6 +40,8 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
         }
 
         plotView = (PlotView) findViewById(R.id.plot_view);
+
+        plotView.addSeries(sensorData);
     }
 
     @Override
@@ -64,7 +70,7 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
 
         Log.v(TAG, String.format("Received sensor value: %f", value));
 
-        plotView.addPoint(new DataPoint<>(value));
+        sensorData.addPoint(new DataPoint(value));
     }
 
     @Override
