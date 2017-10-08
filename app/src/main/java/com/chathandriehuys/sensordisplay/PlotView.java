@@ -18,6 +18,7 @@ import java.util.Locale;
 
 public class PlotView extends View {
     private static final int AXIS_SIZE = 200;
+    private static final int AXIS_TICK_LENGTH = 24;
     private static final int DOMAIN_SECONDS = 5;
     private static final int LABEL_SIZE = 48;
     private static final int PLOT_GUTTER_SIZE = 50;
@@ -106,19 +107,17 @@ public class PlotView extends View {
     private void drawAxisX(Canvas canvas, Rect drawableArea) {
         canvas.drawLine(drawableArea.left, drawableArea.top, drawableArea.right, drawableArea.top, axisPaint);
 
-        labelPaint.setTextAlign(Paint.Align.CENTER);
-
-        canvas.drawText(
-                String.format(Locale.US, "-%d", 1000 * DOMAIN_SECONDS),
+        drawXAxisLabel(
+                canvas,
                 drawableArea.left,
-                drawableArea.top + TEXT_PADDING + labelPaint.getTextSize(),
-                labelPaint);
+                drawableArea.top,
+                String.format(Locale.US, "-%d", 1000 * DOMAIN_SECONDS));
 
-        canvas.drawText(
-                "Now",
+        drawXAxisLabel(
+                canvas,
                 drawableArea.right,
-                drawableArea.top + TEXT_PADDING + labelPaint.getTextSize(),
-                labelPaint);
+                drawableArea.top,
+                "0");
 
         canvas.drawText(
                 "Time (ms)",
@@ -130,19 +129,17 @@ public class PlotView extends View {
     private void drawAxisY(Canvas canvas, Rect drawableArea) {
         canvas.drawLine(drawableArea.right, drawableArea.top, drawableArea.right, drawableArea.bottom, axisPaint);
 
-        labelPaint.setTextAlign(Paint.Align.RIGHT);
+        drawYAxisLabel(
+                canvas,
+                drawableArea.right,
+                drawableArea.top,
+                String.format(Locale.US, "%.2f", rangeMax));
 
-        canvas.drawText(
-                String.format(Locale.US, "%.2f", rangeMax),
-                drawableArea.right - TEXT_PADDING,
-                drawableArea.top + labelPaint.getTextSize() / 2,
-                labelPaint);
-
-        canvas.drawText(
-                String.format(Locale.US, "%.2f", rangeMin),
-                drawableArea.right - TEXT_PADDING,
+        drawYAxisLabel(
+                canvas,
+                drawableArea.right,
                 drawableArea.bottom,
-                labelPaint);
+                String.format(Locale.US, "%.2f", rangeMin));
 
         labelPaint.setTextAlign(Paint.Align.CENTER);
 
@@ -192,6 +189,29 @@ public class PlotView extends View {
 
             shouldDrawConnector = true;
         }
+    }
+
+    private void drawXAxisLabel(Canvas canvas, int x, int y, String text) {
+        labelPaint.setTextAlign(Paint.Align.CENTER);
+
+        canvas.drawLine(x, y - AXIS_TICK_LENGTH, x, y + AXIS_TICK_LENGTH, labelPaint);
+
+        canvas.drawText(
+                text,
+                x,
+                y + AXIS_TICK_LENGTH + TEXT_PADDING + labelPaint.getTextSize(),
+                labelPaint);
+    }
+
+    private void drawYAxisLabel(Canvas canvas, int x, int y, String text) {
+        labelPaint.setTextAlign(Paint.Align.RIGHT);
+
+        canvas.drawLine(x - AXIS_TICK_LENGTH, y, x + AXIS_TICK_LENGTH, y, labelPaint);
+        canvas.drawText(
+                text,
+                x - AXIS_TICK_LENGTH - TEXT_PADDING,
+                y + labelPaint.getTextSize() / 2,
+                labelPaint);
     }
 
     private void init() {
