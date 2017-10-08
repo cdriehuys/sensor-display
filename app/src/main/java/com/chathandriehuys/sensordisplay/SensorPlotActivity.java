@@ -64,7 +64,7 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
 
         Log.v(TAG, String.format("Received sensor value: %f", value));
 
-        plotView.addPoint(value);
+        plotView.addPoint(new DataPoint<>(value));
     }
 
     @Override

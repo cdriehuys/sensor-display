@@ -23,7 +23,7 @@ public class PlotView extends View {
     private static final int RANGE_BUFFER = 1;
     private static final int TEXT_PADDING = 10;
 
-    private ArrayList<Float> data;
+    private ArrayList<DataPoint<Float>> data;
 
     private float range, rangeMax, rangeMin;
 
@@ -60,7 +60,7 @@ public class PlotView extends View {
         init();
     }
 
-    public void addPoint(float point) {
+    public void addPoint(DataPoint<Float> point) {
         data.add(point);
 
         while (data.size() > NUM_POINTS) {
@@ -152,7 +152,7 @@ public class PlotView extends View {
 
         for (int i = 0; i < data.size(); i++) {
             float x = width / (NUM_POINTS - 1.0f) * i + drawableArea.left;
-            float y = height - (height / range * (data.get(i) - rangeMin)) + drawableArea.top;
+            float y = height - (height / range * (data.get(i).getData() - rangeMin)) + drawableArea.top;
 
             canvas.drawCircle(x, y, POINT_RADIUS, pointPaint);
 
@@ -191,9 +191,9 @@ public class PlotView extends View {
         rangeMax = Float.MIN_VALUE;
         rangeMin = Float.MAX_VALUE;
 
-        for (float point : data) {
-            float max = point + RANGE_BUFFER;
-            float min = point - RANGE_BUFFER;
+        for (DataPoint<Float> point : data) {
+            float max = point.getData() + RANGE_BUFFER;
+            float min = point.getData() - RANGE_BUFFER;
 
             if (max > rangeMax) {
                 rangeMax = max;
