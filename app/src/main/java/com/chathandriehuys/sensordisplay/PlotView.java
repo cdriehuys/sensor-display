@@ -5,6 +5,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
@@ -19,6 +21,7 @@ public class PlotView extends View {
     private static final int DOMAIN_SECONDS = 5;
     private static final int LABEL_SIZE = 48;
     private static final int PLOT_GUTTER_SIZE = 50;
+    private static final int PLOT_REFRESH_INTERVAL = 100;
     private static final int POINT_RADIUS = 10;
     private static final int RANGE_BUFFER = 1;
     private static final int TEXT_PADDING = 10;
@@ -73,8 +76,6 @@ public class PlotView extends View {
         }
 
         refreshRange();
-
-        invalidate();
     }
 
     @Override
@@ -201,6 +202,16 @@ public class PlotView extends View {
         axisAreaX = new Rect();
         axisAreaY = new Rect();
         plotArea = new Rect();
+
+        final Handler handler = new Handler(Looper.getMainLooper());
+        Runnable refreshPlotRunnable = new Runnable() {
+            public void run() {
+                invalidate();
+                handler.postDelayed(this, PLOT_REFRESH_INTERVAL);
+            }
+        };
+
+        refreshPlotRunnable.run();
     }
 
     private void refreshRange() {
