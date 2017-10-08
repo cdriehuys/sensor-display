@@ -21,7 +21,7 @@ public class PlotView extends View {
     private static final int DOMAIN_SECONDS = 5;
     private static final int LABEL_SIZE = 48;
     private static final int PLOT_GUTTER_SIZE = 50;
-    private static final int PLOT_REFRESH_INTERVAL = 100;
+    private static final int PLOT_REFRESH_INTERVAL = 1000 / 60;
     private static final int POINT_RADIUS = 10;
     private static final int RANGE_BUFFER = 1;
     private static final int TEXT_PADDING = 10;
@@ -161,10 +161,14 @@ public class PlotView extends View {
         float prevX = 0;
         float prevY = 0;
 
+        boolean shouldDrawConnector = false;
+
         for (int i = 0; i < data.size(); i++) {
             Date pointDate = data.get(i).getTimestamp();
 
             if (pointDate.before(oldest)) {
+                shouldDrawConnector = false;
+
                 continue;
             }
 
@@ -173,12 +177,14 @@ public class PlotView extends View {
 
             canvas.drawCircle(x, y, POINT_RADIUS, pointPaint);
 
-            if (i > 0) {
+            if (shouldDrawConnector) {
                 canvas.drawLine(prevX, prevY, x, y, pointPaint);
             }
 
             prevX = x;
             prevY = y;
+
+            shouldDrawConnector = true;
         }
     }
 
