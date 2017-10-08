@@ -109,13 +109,19 @@ public class PlotView extends View {
         labelPaint.setTextAlign(Paint.Align.CENTER);
 
         canvas.drawText(
+                String.format(Locale.US, "-%d", 1000 * DOMAIN_SECONDS),
+                drawableArea.left,
+                drawableArea.top + TEXT_PADDING + labelPaint.getTextSize(),
+                labelPaint);
+
+        canvas.drawText(
                 "Now",
                 drawableArea.right,
                 drawableArea.top + TEXT_PADDING + labelPaint.getTextSize(),
                 labelPaint);
 
         canvas.drawText(
-                "Time",
+                "Time (ms)",
                 (drawableArea.left + drawableArea.right) / 2,
                 drawableArea.bottom,
                 labelPaint);
