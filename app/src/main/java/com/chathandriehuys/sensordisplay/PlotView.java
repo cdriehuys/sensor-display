@@ -29,6 +29,8 @@ public class PlotView extends View {
 
     private ArrayList<DataPoint<Float>> data;
 
+    private Canvas canvas;
+
     private float range, rangeMax, rangeMin;
 
     private Paint axisPaint;
@@ -83,6 +85,8 @@ public class PlotView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
+        this.canvas = canvas;
+
         int width = canvas.getWidth();
         int height = canvas.getHeight();
 
@@ -99,52 +103,48 @@ public class PlotView extends View {
         axisAreaY.set(xStart, yStart, plotXStart, plotYEnd);
         plotArea.set(plotXStart, yStart, xEnd, plotYEnd);
 
-        drawAxisX(canvas, axisAreaX);
-        drawAxisY(canvas, axisAreaY);
-        drawData(canvas, plotArea);
+        drawAxisX();
+        drawAxisY();
+        drawData();
     }
 
-    private void drawAxisX(Canvas canvas, Rect drawableArea) {
-        canvas.drawLine(drawableArea.left, drawableArea.top, drawableArea.right, drawableArea.top, axisPaint);
+    private void drawAxisX() {
+        canvas.drawLine(axisAreaX.left, axisAreaX.top, axisAreaX.right, axisAreaX.top, axisPaint);
 
         drawXAxisLabel(
-                canvas,
-                drawableArea.left,
-                drawableArea.top,
+                axisAreaX.left,
+                axisAreaX.top,
                 String.format(Locale.US, "-%d", 1000 * DOMAIN_SECONDS));
 
         drawXAxisLabel(
-                canvas,
-                drawableArea.right,
-                drawableArea.top,
+                axisAreaX.right,
+                axisAreaX.top,
                 "0");
 
         canvas.drawText(
                 "Time (ms)",
-                (drawableArea.left + drawableArea.right) / 2,
-                drawableArea.bottom,
+                (axisAreaX.left + axisAreaX.right) / 2,
+                axisAreaX.bottom,
                 labelPaint);
     }
 
-    private void drawAxisY(Canvas canvas, Rect drawableArea) {
-        canvas.drawLine(drawableArea.right, drawableArea.top, drawableArea.right, drawableArea.bottom, axisPaint);
+    private void drawAxisY() {
+        canvas.drawLine(axisAreaY.right, axisAreaY.top, axisAreaY.right, axisAreaY.bottom, axisPaint);
 
         drawYAxisLabel(
-                canvas,
-                drawableArea.right,
-                drawableArea.top,
+                axisAreaY.right,
+                axisAreaY.top,
                 String.format(Locale.US, "%.2f", rangeMax));
 
         drawYAxisLabel(
-                canvas,
-                drawableArea.right,
-                drawableArea.bottom,
+                axisAreaY.right,
+                axisAreaY.bottom,
                 String.format(Locale.US, "%.2f", rangeMin));
 
         labelPaint.setTextAlign(Paint.Align.CENTER);
 
-        float yTitleX = drawableArea.left;
-        float yTitleY = (drawableArea.top + drawableArea.bottom) / 2;
+        float yTitleX = axisAreaY.left;
+        float yTitleY = (axisAreaY.top + axisAreaY.bottom) / 2;
 
         canvas.save();
         canvas.rotate(270.0f, yTitleX, yTitleY);
@@ -152,9 +152,9 @@ public class PlotView extends View {
         canvas.restore();
     }
 
-    private void drawData(Canvas canvas, Rect drawableArea) {
-        int width = drawableArea.width();
-        int height = drawableArea.height();
+    private void drawData() {
+        int width = plotArea.width();
+        int height = plotArea.height();
 
         Date now = new Date();
         Date oldest = new Date(now.getTime() - 1000 * DOMAIN_SECONDS);
@@ -175,8 +175,8 @@ public class PlotView extends View {
                 continue;
             }
 
-            float x = ((float) width) / domain * (pointDate.getTime() - oldest.getTime()) + drawableArea.left;
-            float y = height - (height / range * (data.get(i).getData() - rangeMin)) + drawableArea.top;
+            float x = ((float) width) / domain * (pointDate.getTime() - oldest.getTime()) + plotArea.left;
+            float y = height - (height / range * (data.get(i).getData() - rangeMin)) + plotArea.top;
 
             canvas.drawCircle(x, y, POINT_RADIUS, pointPaint);
 
@@ -191,7 +191,7 @@ public class PlotView extends View {
         }
     }
 
-    private void drawXAxisLabel(Canvas canvas, int x, int y, String text) {
+    private void drawXAxisLabel(int x, int y, String text) {
         labelPaint.setTextAlign(Paint.Align.CENTER);
 
         canvas.drawLine(x, y - AXIS_TICK_LENGTH, x, y + AXIS_TICK_LENGTH, labelPaint);
@@ -203,7 +203,7 @@ public class PlotView extends View {
                 labelPaint);
     }
 
-    private void drawYAxisLabel(Canvas canvas, int x, int y, String text) {
+    private void drawYAxisLabel(int x, int y, String text) {
         labelPaint.setTextAlign(Paint.Align.RIGHT);
 
         canvas.drawLine(x - AXIS_TICK_LENGTH, y, x + AXIS_TICK_LENGTH, y, labelPaint);
