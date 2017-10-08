@@ -22,12 +22,12 @@
             android:layout_height="wrap_content"/>
 
         <Button
-            android:id="@+id/btn_proximity"
+            android:id="@+id/btn_light_sensor"
             android:onClick="onClick"
-            android:text="@string/proximity" />
+            android:text="@string/light_sensor" />
 
         <com.chathandriehuys.sensordisplay.SensorInfoView
-            android:id="@+id/proximity_info"
+            android:id="@+id/light_sensor_info"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content" />
 

@@ -19,8 +19,8 @@ public class MainActivity extends AppCompatActivity {
                 navigateSensorPlot(Sensor.TYPE_ACCELEROMETER);
                 break;
 
-            case R.id.btn_proximity:
-                navigateSensorPlot(Sensor.TYPE_PROXIMITY);
+            case R.id.btn_light_sensor:
+                navigateSensorPlot(Sensor.TYPE_LIGHT);
                 break;
         }
     }
@@ -33,8 +33,8 @@ public class MainActivity extends AppCompatActivity {
         SensorInfoView accelView = (SensorInfoView) findViewById(R.id.accelerometer_info);
         accelView.setSensorType(Sensor.TYPE_ACCELEROMETER);
 
-        SensorInfoView proximityView = (SensorInfoView) findViewById(R.id.proximity_info);
-        proximityView.setSensorType(Sensor.TYPE_PROXIMITY);
+        SensorInfoView lightSensorView = (SensorInfoView) findViewById(R.id.light_sensor_info);
+        lightSensorView.setSensorType(Sensor.TYPE_LIGHT);
     }
 
     private void navigateSensorPlot(int sensorType) {
