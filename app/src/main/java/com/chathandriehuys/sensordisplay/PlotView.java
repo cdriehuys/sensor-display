@@ -108,6 +108,19 @@ public class PlotView extends View {
         drawData();
     }
 
+    private float calculateCanvasX(float x) {
+        float domain = 1000 * DOMAIN_SECONDS;
+        float width = plotArea.width();
+
+        return axisAreaX.right - width / domain * x;
+    }
+
+    private float calculateCanvasY(float y) {
+        float height = plotArea.height();
+
+        return axisAreaY.bottom - height / range * (y - rangeMin);
+    }
+
     private void drawAxisX() {
         canvas.drawLine(axisAreaX.left, axisAreaX.top, axisAreaX.right, axisAreaX.top, axisPaint);
 
@@ -139,21 +152,16 @@ public class PlotView extends View {
     }
 
     private void drawData() {
-        int width = plotArea.width();
-        int height = plotArea.height();
-
         Date now = new Date();
         Date oldest = new Date(now.getTime() - 1000 * DOMAIN_SECONDS);
-
-        long domain = now.getTime() - oldest.getTime();
 
         float prevX = 0;
         float prevY = 0;
 
         boolean shouldDrawConnector = false;
 
-        for (int i = 0; i < data.size(); i++) {
-            Date pointDate = data.get(i).getTimestamp();
+        for (DataPoint<Float> point : data) {
+            Date pointDate = point.getTimestamp();
 
             if (pointDate.before(oldest)) {
                 shouldDrawConnector = false;
@@ -161,8 +169,8 @@ public class PlotView extends View {
                 continue;
             }
 
-            float x = ((float) width) / domain * (pointDate.getTime() - oldest.getTime()) + plotArea.left;
-            float y = height - (height / range * (data.get(i).getData() - rangeMin)) + plotArea.top;
+            float x = calculateCanvasX(now.getTime() - point.getTimestamp().getTime());
+            float y = calculateCanvasY(point.getData());
 
             canvas.drawCircle(x, y, POINT_RADIUS, pointPaint);
 
@@ -178,10 +186,7 @@ public class PlotView extends View {
     }
 
     private void drawXAxisLabel(float x) {
-        float domain = 1000 * DOMAIN_SECONDS;
-        float width = axisAreaX.right - axisAreaX.left;
-
-        float realX = axisAreaX.right - width / domain * x;
+        float realX = calculateCanvasX(x);
         float realY = axisAreaX.top;
 
         labelPaint.setTextAlign(Paint.Align.CENTER);
@@ -196,10 +201,8 @@ public class PlotView extends View {
     }
 
     private void drawYAxisLabel(float y) {
-        float height = axisAreaY.bottom - axisAreaY.top;
-
         float realX = axisAreaY.right;
-        float realY = axisAreaY.bottom - height / range * (y - rangeMin);
+        float realY = calculateCanvasY(y);
 
         labelPaint.setTextAlign(Paint.Align.RIGHT);
 
@@ -219,10 +222,10 @@ public class PlotView extends View {
         rangeMin = -RANGE_BUFFER;
 
         axisPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        axisPaint.setColor(Color.LTGRAY);
+        axisPaint.setColor(Color.GRAY);
 
         labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        labelPaint.setColor(Color.GRAY);
+        labelPaint.setColor(Color.DKGRAY);
         labelPaint.setTextSize(LABEL_SIZE);
 
         pointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
