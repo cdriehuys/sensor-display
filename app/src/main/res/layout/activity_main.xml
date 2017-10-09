@@ -9,27 +9,35 @@
         android:columnCount="2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="24dp">
+        android:layout_margin="8dp">
 
         <Button
             android:id="@+id/btn_accelerometer"
+            android:layout_gravity="fill"
             android:onClick="onClick"
             android:text="@string/accelerometer" />
 
         <com.chathandriehuys.sensordisplay.SensorInfoView
             android:id="@+id/accelerometer_info"
+            android:layout_gravity="fill"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"/>
 
         <Button
             android:id="@+id/btn_light_sensor"
+            android:layout_gravity="fill"
             android:onClick="onClick"
             android:text="@string/light_sensor" />
 
         <com.chathandriehuys.sensordisplay.SensorInfoView
             android:id="@+id/light_sensor_info"
+            android:layout_gravity="fill"
             android:layout_height="wrap_content"
-            android:layout_width="wrap_content" />
+            android:layout_width="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp" />
 
     </GridLayout>
 
