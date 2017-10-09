@@ -28,12 +28,6 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
 
         sensorData = new TimeSeries();
 
-        MeanTimeSeries sensorDataMean = new MeanTimeSeries();
-        sensorData.addListener(sensorDataMean);
-
-        VarianceTimeSeries sensorDataVariance = new VarianceTimeSeries();
-        sensorData.addListener(sensorDataVariance);
-
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             int sensorType = extras.getInt(getString(R.string.EXTRA_SENSOR_TYPE));
@@ -47,8 +41,8 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
         PlotView plotView = (PlotView) findViewById(R.id.plot_view);
 
         plotView.addSeries(sensorData, Color.parseColor("#23af00"));
-        plotView.addSeries(sensorDataMean, Color.parseColor("#2655ff"));
-        plotView.addSeries(sensorDataVariance, Color.parseColor("#ffe732"));
+        plotView.addSeries(sensorData.getAverageSeries(), Color.parseColor("#2655ff"));
+        plotView.addSeries(sensorData.getVarianceSeries(), Color.parseColor("#ffe732"));
     }
 
     @Override

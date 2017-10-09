@@ -53,6 +53,20 @@ class TimeSeries {
         return average;
     }
 
+    TimeSeries getAverageSeries() {
+        DerivedTimeSeries series = new DerivedTimeSeries() {
+            @Override
+            public void pointAdded(TimeSeries series, DataPoint point) {
+                DataPoint average = new DataPoint(series.getAverage(), point.getTimestamp());
+                addPoint(average);
+            }
+        };
+
+        addListener(series);
+
+        return series;
+    }
+
     ArrayList<DataPoint> getData() {
         return data;
     }
@@ -83,6 +97,20 @@ class TimeSeries {
         float average = getAverage();
 
         return sum / data.size() - average * average;
+    }
+
+    TimeSeries getVarianceSeries() {
+        DerivedTimeSeries series = new DerivedTimeSeries() {
+            @Override
+            public void pointAdded(TimeSeries series, DataPoint point) {
+                DataPoint variance = new DataPoint(series.getVariance(), point.getTimestamp());
+                addPoint(variance);
+            }
+        };
+
+        addListener(series);
+
+        return series;
     }
 
     private void addToAverage(float val) {
