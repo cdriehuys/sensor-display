@@ -13,11 +13,15 @@ class TimeSeries {
     private ArrayList<DataPoint> data;
     private ArrayList<TimeSeriesListener> listeners;
 
+    private float average;
+
     private int domain;
 
     TimeSeries() {
         data = new ArrayList<>();
         listeners = new ArrayList<>();
+
+        average = 0;
 
         domain = DOMAIN_MILLIS;
     }
@@ -29,12 +33,14 @@ class TimeSeries {
     void addPoint(DataPoint point) {
         data.add(point);
 
+        addToAverage(point.getData());
+
         Date now = new Date();
         long minTime = now.getTime() - domain;
 
         for (int i = data.size() - 1; i >= 0; i--) {
             if (data.get(i).getTimestamp().getTime() < minTime) {
-                data.remove(i);
+                removePoint(i);
             }
         }
 
@@ -44,13 +50,7 @@ class TimeSeries {
     }
 
     float getAverage() {
-        float sum = 0;
-
-        for (DataPoint point : data) {
-            sum += point.getData();
-        }
-
-        return sum / data.size();
+        return average;
     }
 
     ArrayList<DataPoint> getData() {
@@ -83,5 +83,19 @@ class TimeSeries {
         float average = getAverage();
 
         return sum / data.size() - average * average;
+    }
+
+    private void addToAverage(float val) {
+        average = average * (data.size() - 1) / data.size() + val / data.size();
+    }
+
+    private void removeFromAverage(float val) {
+        average = average * (data.size() + 1) / data.size() - val / data.size();
+    }
+
+    private void removePoint(int index) {
+        DataPoint point = data.remove(index);
+
+        removeFromAverage(point.getData());
     }
 }

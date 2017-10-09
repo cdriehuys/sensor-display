@@ -15,17 +15,11 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
 
     private static final String TAG = SensorPlotActivity.class.getSimpleName();
 
-    private MeanTimeSeries sensorDataMean;
-
-    private PlotView plotView;
-
     private Sensor sensor;
 
     private SensorManager manager;
 
     private TimeSeries sensorData;
-
-    private VarianceTimeSeries sensorDataVariance;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,10 +28,10 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
 
         sensorData = new TimeSeries();
 
-        sensorDataMean = new MeanTimeSeries();
+        MeanTimeSeries sensorDataMean = new MeanTimeSeries();
         sensorData.addListener(sensorDataMean);
 
-        sensorDataVariance = new VarianceTimeSeries();
+        VarianceTimeSeries sensorDataVariance = new VarianceTimeSeries();
         sensorData.addListener(sensorDataVariance);
 
         Bundle extras = getIntent().getExtras();
@@ -50,7 +44,7 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
             manager.registerListener(this, sensor, POLLING_INTERVAL);
         }
 
-        plotView = (PlotView) findViewById(R.id.plot_view);
+        PlotView plotView = (PlotView) findViewById(R.id.plot_view);
 
         plotView.addSeries(sensorData, Color.parseColor("#23af00"));
         plotView.addSeries(sensorDataMean, Color.parseColor("#2655ff"));
