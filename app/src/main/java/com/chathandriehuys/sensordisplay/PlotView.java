@@ -17,6 +17,9 @@ import java.util.Date;
 import java.util.Locale;
 
 
+/**
+ * A view for plotting different series of data.
+ */
 public class PlotView extends View {
     private static final int AXIS_SIZE = 200;
     private static final int AXIS_TICK_LENGTH = 24;
@@ -69,16 +72,28 @@ public class PlotView extends View {
         init();
     }
 
+    /**
+     * Add a new series to the plot.
+     *
+     * @param series The series to plot.
+     * @param color The color to plot the series with.
+     */
     public void addSeries(TimeSeries series, int color) {
         this.series.add(new PlotSeriesEntry(series, color));
     }
 
+    /**
+     * Draw the plot and its associated series.
+     *
+     * @param canvas The canvas to draw the plot on.
+     */
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
         this.canvas = canvas;
 
+        // Set up geometry of plot components
         int width = canvas.getWidth();
         int height = canvas.getHeight();
 
@@ -95,38 +110,61 @@ public class PlotView extends View {
         axisAreaY.set(xStart, yStart, plotXStart, plotYEnd);
         plotArea.set(plotXStart, yStart, xEnd, plotYEnd);
 
+        // Calculate plot parameters
         domain = getDomain();
         range = getRange();
 
+        // Draw plot
         drawAxisX();
         drawAxisY();
-
         drawData();
     }
 
+    /**
+     * Convert an x-coordinate from a series into a coordinate on the canvas.
+     *
+     * @param x The x-coordinate of a point in a series.
+     *
+     * @return The x-coordinate on the canvas where the provided value is located.
+     */
     private float calculateCanvasX(float x) {
-        float domain = 1000 * DOMAIN_SECONDS;
         float width = plotArea.width();
 
-        return axisAreaX.right - width / domain * x;
+        return axisAreaX.right - width / (domain.getMax() - domain.getMin()) * x;
     }
 
+    /**
+     * Convert a y-coordinate from a series into a coordinate on the canvas.
+     *
+     * @param y The y-coordinate of a point in a series.
+     *
+     * @return The y-coordinate on the canvas where the provided value is located.
+     */
     private float calculateCanvasY(float y) {
         float height = plotArea.height();
 
         return axisAreaY.bottom - height / (range.getMax() - range.getMin()) * (y - range.getMin());
     }
 
+    /**
+     * Draw the plot's x-axis.
+     *
+     * This includes the labels and tick marks for the axis.
+     */
     private void drawAxisX() {
+        // The actual axis
         canvas.drawLine(axisAreaX.left, axisAreaX.top, axisAreaX.right, axisAreaX.top, axisPaint);
 
+        // Label the upper and lower bounds of the axis
         drawXAxisLabel(domain.getMin());
         drawXAxisLabel(domain.getMax());
 
+        // Draw tick marks and labels at the appropriate intervals
         for (float tick : generateTickMarks(domain.getMin(), domain.getMax())) {
             drawXAxisLabel(tick);
         }
 
+        // The axis title
         canvas.drawText(
                 "Time (ms)",
                 (axisAreaX.left + axisAreaX.right) / 2,
@@ -134,18 +172,26 @@ public class PlotView extends View {
                 labelPaint);
     }
 
+    /**
+     * Draw the plot's y-axis.
+     *
+     * This includes the labels and tick marks for the axis.
+     */
     private void drawAxisY() {
+        // The actual axis
         canvas.drawLine(axisAreaY.right, axisAreaY.top, axisAreaY.right, axisAreaY.bottom, axisPaint);
 
-        Interval<Float> range = getRange();
-
+        // Label the upper and lower bounds of the axis
         drawYAxisLabel(range.getMin());
         drawYAxisLabel(range.getMax());
 
+        // Draw tick marks and labels at the appropriate intervals
         for (float tick : generateTickMarks((int) Math.floor(range.getMin()), (int) Math.ceil(range.getMax()))) {
             drawYAxisLabel(tick);
         }
 
+        // Draw the axis title. This is more complex than the x-axis since we need to rotate the
+        // text to be parallel with the axis.
         labelPaint.setTextAlign(Paint.Align.CENTER);
 
         float yTitleX = axisAreaY.left;
@@ -157,10 +203,15 @@ public class PlotView extends View {
         canvas.restore();
     }
 
+    /**
+     * Draw the data from each series attached to the plot.
+     */
     private void drawData() {
+        // Create baseline for expired data.
         Date now = new Date();
         Date oldest = new Date(now.getTime() - 1000 * DOMAIN_SECONDS);
 
+        // Plot each series attached to the plot
         for (PlotSeriesEntry entry : series) {
             pointPaint.setColor(entry.getColor());
 
@@ -169,26 +220,28 @@ public class PlotView extends View {
 
             boolean shouldDrawConnector = false;
 
+            // Loop through each data-point in the series
             for (DataPoint point : entry.getSeries().getData()) {
                 Date pointDate = point.getTimestamp();
 
                 if (pointDate.before(oldest)) {
+                    // If the data-point is expired, we shouldn't draw it or a connecting line to it
                     shouldDrawConnector = false;
 
                     continue;
                 }
 
+                // Get the on-screen coordinates of the point and draw it
                 float x = calculateCanvasX(now.getTime() - point.getTimestamp().getTime());
                 float y = calculateCanvasY(point.getData());
 
                 canvas.drawCircle(x, y, POINT_RADIUS, pointPaint);
 
-                Log.v("TAG", String.format("Drawing point at (%f, %f)", x, y));
-
                 if (shouldDrawConnector) {
                     canvas.drawLine(prevX, prevY, x, y, pointPaint);
                 }
 
+                // Update information for drawing the next connecting line
                 prevX = x;
                 prevY = y;
 
@@ -197,6 +250,13 @@ public class PlotView extends View {
         }
     }
 
+    /**
+     * Draw a label on the x-axis.
+     *
+     * This draws a label and a line at the given x-coordinate.
+     *
+     * @param x The x-coordinate to place the label at.
+     */
     private void drawXAxisLabel(float x) {
         float realX = calculateCanvasX(x);
         float realY = axisAreaX.top;
@@ -216,6 +276,13 @@ public class PlotView extends View {
                 labelPaint);
     }
 
+    /**
+     * Draw a label on the y-axis.
+     *
+     * This draws a label and a line at the given y-coordinate.
+     *
+     * @param y The y-coordinate to place the label.
+     */
     private void drawYAxisLabel(float y) {
         float realX = axisAreaY.right;
         float realY = calculateCanvasY(y);
@@ -235,18 +302,34 @@ public class PlotView extends View {
                 labelPaint);
     }
 
+    /**
+     * Generate the locations of the tick marks for a given axis.
+     *
+     * @param min The axis' minimum value.
+     * @param max The axis' maximum value.
+     *
+     * @return A list of values to place tick marks at.
+     */
     private ArrayList<Integer> generateTickMarks(int min, int max) {
         float range = max - min;
 
         ArrayList<Integer> ticks = new ArrayList<>();
 
         if (range <= 1) {
+            // If the range is too small, we don't want any addition ticks.
             return ticks;
         }
 
+        // The step is equivalent to 10 raised to the order of magnitude of the range of the
+        // provided values. For example, with a range of 45, the step would be 10, and for a range
+        // of 176, the step would be 100.
         int step = (int) Math.pow(10, Math.floor(Math.log10(range)));
+
+        // Start the tick marks at the next whole multiple of the step value. For example, if the
+        // min is 43 and the step is 10, we would start at 50.
         int start = min + step - (min % step);
 
+        // Add tick marks until we reach the max value.
         for (int tick = start; tick < max; tick += step) {
             ticks.add(tick);
         }
@@ -254,6 +337,11 @@ public class PlotView extends View {
         return ticks;
     }
 
+    /**
+     * Get the domain of all the series included in the plot.
+     *
+     * @return The smallest domain that encompasses the domains of all the series being plotted.
+     */
     private Interval<Integer> getDomain() {
         int domainMin = Integer.MAX_VALUE, domainMax = Integer.MIN_VALUE;
 
@@ -267,6 +355,11 @@ public class PlotView extends View {
         return new Interval<>(domainMin, domainMax);
     }
 
+    /**
+     * Get the range of all the series included in the plot.
+     *
+     * @return The smallest range that encompasses the ranges of all the series being plotted.
+     */
     private Interval<Float> getRange() {
         float rangeMin = Float.MAX_VALUE, rangeMax = Float.MIN_VALUE;
 
@@ -280,9 +373,13 @@ public class PlotView extends View {
         return new Interval<>(rangeMin, rangeMax);
     }
 
+    /**
+     * Initialize the plot data structures.
+     */
     private void init() {
         series = new ArrayList<>();
 
+        // Set up different paint styles
         axisPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         axisPaint.setColor(Color.GRAY);
 
@@ -296,10 +393,13 @@ public class PlotView extends View {
         pointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         pointPaint.setColor(Color.GREEN);
 
+        // Initialize geometry
         axisAreaX = new Rect();
         axisAreaY = new Rect();
         plotArea = new Rect();
 
+        // Set up handler to refresh the plot at the given interval. This allows us to keep moving
+        // data along the time-axis when no new data is coming in.
         final Handler handler = new Handler(Looper.getMainLooper());
         Runnable refreshPlotRunnable = new Runnable() {
             public void run() {

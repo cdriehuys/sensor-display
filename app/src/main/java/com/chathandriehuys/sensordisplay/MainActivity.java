@@ -6,6 +6,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 
+/**
+ * The main activity for the app.
+ *
+ * This activity is launched when the app is opened.
+ */
 public class MainActivity extends AppCompatActivity {
 
     /**
@@ -25,11 +30,17 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Initialize the activity.
+     *
+     * @param savedInstanceState The activity's previous state if it's being resumed.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Link info views to the correct sensor
         SensorInfoView accelView = (SensorInfoView) findViewById(R.id.accelerometer_info);
         accelView.setSensorType(Sensor.TYPE_ACCELEROMETER);
 
@@ -37,6 +48,11 @@ public class MainActivity extends AppCompatActivity {
         lightSensorView.setSensorType(Sensor.TYPE_LIGHT);
     }
 
+    /**
+     * Launch an activity to plot the data for a sensor.
+     *
+     * @param sensorType The type of sensor that the plot will show data for.
+     */
     private void navigateSensorPlot(int sensorType) {
         Intent intent = new Intent(this, SensorPlotActivity.class);
         intent.putExtra(getString(R.string.EXTRA_SENSOR_TYPE), sensorType);

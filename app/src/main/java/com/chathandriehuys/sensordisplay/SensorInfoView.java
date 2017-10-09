@@ -8,6 +8,9 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 
 
+/**
+ * A view to display information about a specific type of sensor.
+ */
 public class SensorInfoView extends android.support.v7.widget.AppCompatTextView {
     private int sensorType;
 
