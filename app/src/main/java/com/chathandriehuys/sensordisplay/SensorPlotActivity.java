@@ -1,6 +1,7 @@
 package com.chathandriehuys.sensordisplay;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -14,16 +15,24 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
 
     private static final String TAG = SensorPlotActivity.class.getSimpleName();
 
-    private PlotView plotView;
-
     private Sensor sensor;
 
     private SensorManager manager;
+
+    private TimeSeries sensorData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sensor_plot);
+
+        sensorData = new TimeSeries();
+
+        MeanTimeSeries sensorDataMean = new MeanTimeSeries();
+        sensorData.addListener(sensorDataMean);
+
+        VarianceTimeSeries sensorDataVariance = new VarianceTimeSeries();
+        sensorData.addListener(sensorDataVariance);
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -35,7 +44,11 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
             manager.registerListener(this, sensor, POLLING_INTERVAL);
         }
 
-        plotView = (PlotView) findViewById(R.id.plot_view);
+        PlotView plotView = (PlotView) findViewById(R.id.plot_view);
+
+        plotView.addSeries(sensorData, Color.parseColor("#23af00"));
+        plotView.addSeries(sensorDataMean, Color.parseColor("#2655ff"));
+        plotView.addSeries(sensorDataVariance, Color.parseColor("#ffe732"));
     }
 
     @Override
@@ -64,7 +77,7 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
 
         Log.v(TAG, String.format("Received sensor value: %f", value));
 
-        plotView.addPoint(new DataPoint<>(value));
+        sensorData.addPoint(new DataPoint(value));
     }
 
     @Override
