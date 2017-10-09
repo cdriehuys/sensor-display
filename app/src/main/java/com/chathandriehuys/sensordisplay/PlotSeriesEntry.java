@@ -1,9 +1,7 @@
 package com.chathandriehuys.sensordisplay;
 
 
-import android.graphics.Color;
-
-public class PlotSeriesEntry {
+class PlotSeriesEntry {
     private int color;
 
     private TimeSeries series;

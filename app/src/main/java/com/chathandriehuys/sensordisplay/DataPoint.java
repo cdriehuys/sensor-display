@@ -17,7 +17,7 @@ class DataPoint {
         this.timestamp = timestamp;
     }
 
-    public float getData() { return data; }
+    float getData() { return data; }
 
-    public Date getTimestamp() { return timestamp; }
+    Date getTimestamp() { return timestamp; }
 }
