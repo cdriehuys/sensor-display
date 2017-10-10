@@ -17,7 +17,15 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".SensorPlotActivity" />
+        <activity
+            android:name=".SensorPlotActivity"
+            android:parentActivityName="com.chathandriehuys.sensordisplay.MainActivity">
+
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.chathandriehuys.sensordisplay.MainActivity" />
+
+        </activity>
     </application>
 
 </manifest>
