@@ -17,10 +17,16 @@ class TimeSeries {
 
     private int domain;
 
+    private String title;
+
     /**
      * Create a new series of data.
+     *
+     * @param title The title of the series.
      */
-    TimeSeries() {
+    TimeSeries(String title) {
+        this.title = title;
+
         data = new ArrayList<>();
         listeners = new ArrayList<>();
 
@@ -68,7 +74,7 @@ class TimeSeries {
      * @return A series that tracks the average of the current series.
      */
     TimeSeries getAverageSeries() {
-        DerivedTimeSeries series = new DerivedTimeSeries() {
+        DerivedTimeSeries series = new DerivedTimeSeries("Average") {
             @Override
             public void pointAdded(TimeSeries series, DataPoint point) {
                 DataPoint average = new DataPoint(series.getAverage(), point.getTimestamp());
@@ -117,6 +123,15 @@ class TimeSeries {
     }
 
     /**
+     * Get the title of the series.
+     *
+     * @return The series' title.
+     */
+    String getTitle() {
+        return title;
+    }
+
+    /**
      * Get a series that contains the variance of the current series.
      *
      * The returned series is added as a listener to the current series so that it stays updated as
@@ -125,7 +140,7 @@ class TimeSeries {
      * @return A series that tracks the variance of the current series.
      */
     TimeSeries getVarianceSeries() {
-        DerivedTimeSeries series = new DerivedTimeSeries() {
+        DerivedTimeSeries series = new DerivedTimeSeries("Variance") {
             @Override
             public void pointAdded(TimeSeries series, DataPoint point) {
                 DataPoint variance = new DataPoint(series.getVariance(), point.getTimestamp());

@@ -24,6 +24,10 @@ public class PlotView extends View {
     private static final int AXIS_TICK_LENGTH = 24;
     private static final int DOMAIN_SECONDS = 5;
     private static final int LABEL_SIZE = 48;
+    private static final int LEGEND_HEIGHT = 100;
+    private static final int LEGEND_LABEL_BOX_PADDING = 20;
+    private static final int LEGEND_LABEL_BOX_WIDTH = 50;
+    private static final int LEGEND_LABEL_MARGIN = 100;
     private static final int PLOT_GUTTER_SIZE = 50;
     private static final int PLOT_REFRESH_INTERVAL = 1000 / 60;
     private static final int POINT_RADIUS = 10;
@@ -44,6 +48,7 @@ public class PlotView extends View {
 
     private Rect axisAreaX;
     private Rect axisAreaY;
+    private Rect legendArea;
     private Rect plotArea;
 
     public PlotView(Context context) {
@@ -103,10 +108,13 @@ public class PlotView extends View {
         int yEnd = height - PLOT_GUTTER_SIZE;
 
         int plotXStart = xStart + AXIS_SIZE;
-        int plotYEnd = yEnd - AXIS_SIZE;
+        int plotYEnd = yEnd - LEGEND_HEIGHT - AXIS_SIZE;
 
-        axisAreaX.set(plotXStart, plotYEnd, xEnd, yEnd);
+        int legendYStart = plotYEnd + AXIS_SIZE;
+
+        axisAreaX.set(plotXStart, plotYEnd, xEnd, legendYStart);
         axisAreaY.set(xStart, yStart, plotXStart, plotYEnd);
+        legendArea.set(xStart, legendYStart, xEnd, yEnd);
         plotArea.set(plotXStart, yStart, xEnd, plotYEnd);
 
         // Calculate plot parameters
@@ -117,6 +125,7 @@ public class PlotView extends View {
         drawAxisX();
         drawAxisY();
         drawData();
+        drawLegend();
     }
 
     /**
@@ -246,6 +255,33 @@ public class PlotView extends View {
 
                 shouldDrawConnector = true;
             }
+        }
+    }
+
+    /**
+     * Draw the legend for the plot.
+     *
+     * The legend maps different series to different colors.
+     */
+    private void drawLegend() {
+        float labelHeight = labelPaint.getTextSize();
+
+        float x = legendArea.left;
+        float y = legendArea.bottom;
+
+        labelPaint.setTextAlign(Paint.Align.LEFT);
+
+        Paint legendBoxPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+        for (PlotSeriesEntry entry : series) {
+            legendBoxPaint.setColor(entry.getColor());
+            canvas.drawRect(x, y - labelHeight, x + LEGEND_LABEL_BOX_WIDTH, y, legendBoxPaint);
+
+            x += LEGEND_LABEL_BOX_WIDTH + LEGEND_LABEL_BOX_PADDING;
+
+            canvas.drawText(entry.getSeries().getTitle(), x, y, labelPaint);
+
+            x += labelPaint.measureText(entry.getSeries().getTitle()) + LEGEND_LABEL_MARGIN;
         }
     }
 
@@ -395,6 +431,7 @@ public class PlotView extends View {
         // Initialize geometry
         axisAreaX = new Rect();
         axisAreaY = new Rect();
+        legendArea = new Rect();
         plotArea = new Rect();
 
         // Set up handler to refresh the plot at the given interval. This allows us to keep moving

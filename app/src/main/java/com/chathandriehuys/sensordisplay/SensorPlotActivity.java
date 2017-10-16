@@ -58,7 +58,7 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
         setContentView(R.layout.activity_sensor_plot);
 
         // Create a new series to hold raw sensor data
-        sensorData = new TimeSeries();
+        sensorData = new TimeSeries("Data");
 
         // Get the type of sensor the plot should display data for
         Bundle extras = getIntent().getExtras();
