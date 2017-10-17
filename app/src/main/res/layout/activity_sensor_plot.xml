@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent">
+
+    <com.chathandriehuys.sensordisplay.PlotView
+        android:id="@+id/plot_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/animation_view"/>
+
+    <ImageView
+        android:adjustViewBounds="true"
+        android:id="@+id/animation_view"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="100dp"
+        android:layout_alignParentBottom="true"
+        android:contentDescription="@string/sensor_animation"
+        android:scaleType="fitCenter"/>
+
+</RelativeLayout>

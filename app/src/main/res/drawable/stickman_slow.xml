@@ -1,0 +1,6 @@
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/stickman_1" android:duration="300" />
+    <item android:drawable="@drawable/stickman_2" android:duration="300" />
+    <item android:drawable="@drawable/stickman_3" android:duration="300" />
+    <item android:drawable="@drawable/stickman_4" android:duration="300" />
+</animation-list>
