@@ -66,6 +66,15 @@ class TimeSeries {
     }
 
     /**
+     * Get the series' average value.
+     *
+     * @return The series' running average.
+     */
+    float getAverage() {
+        return average;
+    }
+
+    /**
      * Get a series that contains the average of the current series.
      *
      * The returned series is added as a listener to the current series so that it stays updated as
@@ -171,15 +180,6 @@ class TimeSeries {
      */
     private void addToAverage(float val) {
         average = average * (data.size() - 1) / data.size() + val / data.size();
-    }
-
-    /**
-     * Get the series' average value.
-     *
-     * @return The series' running average.
-     */
-    private float getAverage() {
-        return average;
     }
 
     /**

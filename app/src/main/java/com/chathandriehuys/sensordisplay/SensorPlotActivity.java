@@ -2,6 +2,7 @@ package com.chathandriehuys.sensordisplay;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.AnimationDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -11,14 +12,24 @@ import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
+import android.widget.ImageView;
 
 /**
  * Activity for plotting a sensor's data.
  */
 public class SensorPlotActivity extends AppCompatActivity implements SensorEventListener {
+    private static final int ACCELEROMETER_LOW_THRESHOLD = 10;
+    private static final int ACCELEROMETER_HIGH_THRESHOLD = 15;
+    private static final int LIGHT_THRESHOLD = 50;
     private static final int POLLING_INTERVAL = 1000000;
 
     private static final String TAG = SensorPlotActivity.class.getSimpleName();
+
+    private ImageView animationView;
+
+    private int animationViewHeight;
+    private int currentAnimation;
+    private int sensorType;
 
     private Sensor sensor;
 
@@ -63,7 +74,7 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
         // Get the type of sensor the plot should display data for
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
-            int sensorType = extras.getInt(getString(R.string.EXTRA_SENSOR_TYPE));
+            sensorType = extras.getInt(getString(R.string.EXTRA_SENSOR_TYPE));
 
             // Subscribe the activity to sensor events
             manager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -78,6 +89,11 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
         plotView.addSeries(sensorData, Color.parseColor("#23af00"));
         plotView.addSeries(sensorData.getAverageSeries(), Color.parseColor("#2655ff"));
         plotView.addSeries(sensorData.getVarianceSeries(), Color.parseColor("#ffe732"));
+
+        // Save a reference to the animation view
+        animationView = (ImageView) findViewById(R.id.animation_view);
+        animationView.requestLayout();
+        animationViewHeight = animationView.getLayoutParams().height;
 
         // Enable the back button in the title bar
         android.support.v7.app.ActionBar actionBar = getSupportActionBar();
@@ -127,8 +143,43 @@ public class SensorPlotActivity extends AppCompatActivity implements SensorEvent
         Log.v(TAG, String.format("Received sensor value: %f", value));
 
         sensorData.addPoint(new DataPoint(value));
+
+        updateAnimation();
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) { }
+
+    private void updateAnimation() {
+        float value = sensorData.getAverage();
+        int newAnimation = 0;
+
+        if (sensorType == Sensor.TYPE_ACCELEROMETER) {
+            if (value < ACCELEROMETER_LOW_THRESHOLD) {
+                newAnimation = R.drawable.stickman_slow;
+            } else if (value < ACCELEROMETER_HIGH_THRESHOLD) {
+                newAnimation = R.drawable.stickman_med;
+            } else {
+                newAnimation = R.drawable.stickman_fast;
+            }
+        } else if (sensorType == Sensor.TYPE_LIGHT) {
+            if (value < LIGHT_THRESHOLD) {
+                newAnimation = R.drawable.star;
+            } else {
+                newAnimation = R.drawable.sun;
+            }
+        } else {
+            animationView.getLayoutParams().height = 0;
+        }
+
+        if (newAnimation != 0 && newAnimation != currentAnimation) {
+            currentAnimation = newAnimation;
+            animationView.setBackgroundResource(currentAnimation);
+
+            animationView.getLayoutParams().height = animationViewHeight;
+
+            AnimationDrawable anim = (AnimationDrawable) animationView.getBackground();
+            anim.start();
+        }
+    }
 }

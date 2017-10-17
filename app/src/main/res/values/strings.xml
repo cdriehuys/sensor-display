@@ -7,4 +7,5 @@
     <string name="sensor_info_loading">Loading sensor information.</string>
     <string name="sensor_info_not_found">No sensor found.</string>
     <string name="title_activity_sensor_plot">SensorPlotActivity</string>
+    <string name="sensor_animation">Sensor Animation</string>
 </resources>
